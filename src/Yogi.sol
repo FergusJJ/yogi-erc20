@@ -46,7 +46,16 @@ contract Yogi is ERC20 {
         _mint(msg.sender, mintedTokens_);
     }
 
+bool private initialized;
+
+function initialize(uint256 initialSupply) public {
+    require(!initialized, "Contract is already initialized");
+    _mint(msg.sender, initialSupply);
+    initialized = true;
+}
+
     function createProposal(bytes32 _name) external {
+        require(msg.sender == governor, "only the governor can create a proposal");
         uint proposalId = proposalIds.length;
         proposals[proposalId] = Proposal({
             name:_name, 
@@ -92,7 +101,7 @@ contract Yogi is ERC20 {
     function closeProposal(uint proposalId) public {
         require(msg.sender == governor, "only the governor can close a proposal");
         require(proposalId < proposalIds.length, "proposal does not exist");
-        require(!proposals[proposalId].isOpen, "proposal is already closed");
+        require(proposals[proposalId].isOpen, "proposal is already closed");
         proposals[proposalId].isOpen = false;
     } 
 
@@ -107,13 +116,13 @@ contract Yogi is ERC20 {
         uint yesVotes = proposals[proposalId].yesVotes; 
         uint vetoVotes = proposals[proposalId].vetoVotes;
 
-        if (vetoVotes >= totalVotes * 33 / 100) {
+        if (vetoVotes > (totalVotes * 33 / 100)) {
             return VoteOutcome.No;
         } else if (yesVotes > noVotes && yesVotes > abstainVotes && yesVotes > vetoVotes) {
             return VoteOutcome.Yes;
         } else if (noVotes > yesVotes && noVotes > abstainVotes && noVotes > vetoVotes) {
             return VoteOutcome.No;
-        }  else if (abstainVotes > yesVotes && abstainVotes > noVotes && abstainVotes > vetoVotes) {
+         }  else if (abstainVotes > yesVotes && abstainVotes > noVotes && abstainVotes > vetoVotes) {
             return VoteOutcome.Unclear;
         } else {
             // Handle tie or no clear winner
@@ -132,9 +141,43 @@ contract Yogi is ERC20 {
         return [yesVotes, noVotes, vetoVotes, abstainVotes];
     }
 
-    function getProposalName(uint proposalId) public view returns (bytes32) {
-        require(proposalId < proposalIds.length, "proposal does not exist");
-        return proposals[proposalId].name;
+    function getProposalIdsLength() public view returns (uint) {
+        return proposalIds.length;
+    }
+
+    function getProposal(uint key) public view returns (Proposal memory) {
+        require(key < proposalIds.length, "proposal does not exist");
+        return proposals[key];
+    }
+
+    function getProposalName(uint index) public view returns (bytes32) {
+        require(index < proposalIds.length, "proposal does not exist");
+        return proposals[index].name;
+    }
+
+    function isProposalOpen(uint index) public view returns (bool) {
+        require(index < proposalIds.length, "proposal does not exist");
+        return proposals[index].isOpen;
+    }
+
+    function getYesVotes(uint index) public view returns (uint) {
+        require(index < proposalIds.length, "proposal does not exist");
+        return proposals[index].yesVotes;
+    }
+
+    function getNoVotes(uint index) public view returns (uint) {
+        require(index < proposalIds.length, "proposal does not exist");
+        return proposals[index].noVotes;
+    }
+
+    function getVetoVotes(uint index) public view returns (uint) {
+        require(index < proposalIds.length, "proposal does not exist");
+        return proposals[index].vetoVotes;
+    }
+
+    function getAbstainVotes(uint index) public view returns (uint) {
+        require(index < proposalIds.length, "proposal does not exist");
+        return proposals[index].abstainVotes;
     }
 
 }
