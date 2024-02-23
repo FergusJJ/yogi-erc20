@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 
 
 
-contract Yogi is ERC20 {
+contract Yogi is ERC20{
 
     address public governor;
     
@@ -46,13 +46,7 @@ contract Yogi is ERC20 {
         _mint(msg.sender, mintedTokens_);
     }
 
-bool private initialized;
 
-function initialize(uint256 initialSupply) public {
-    require(!initialized, "Contract is already initialized");
-    _mint(msg.sender, initialSupply);
-    initialized = true;
-}
 
     function createProposal(bytes32 _name) external {
         require(msg.sender == governor, "only the governor can create a proposal");
@@ -180,4 +174,7 @@ function initialize(uint256 initialSupply) public {
         return proposals[index].abstainVotes;
     }
 
+    function getGovernor() public view returns (address) {
+        return governor;
+    }
 }
